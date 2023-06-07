@@ -105,7 +105,7 @@ func (Empty) MACByIP(_ netip.Addr) (mac net.HardwareAddr) { return nil }
 func (Empty) IPByHost(_ string) (ip netip.Addr) { return netip.Addr{} }
 
 // type check
-var _ agh.ServiceWithConfig[*Config] = Empty{}
+var _ Interface = Empty{}
 
 // Leases implements the [Interface] interface for Empty.
 func (Empty) Leases() (leases []*Lease) { return nil }

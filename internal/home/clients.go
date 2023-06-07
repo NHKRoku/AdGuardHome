@@ -57,6 +57,9 @@ type clientsContainer struct {
 	// dhcpServer is used for looking up clients IP addresses by MAC addresses
 	dhcpServer dhcpd.Interface
 
+	// dhcp is the DHCP service implementation.
+	dhcp DHCP
+
 	// dnsServer is used for checking clients IP status access list status
 	dnsServer *dnsforward.Server
 
@@ -118,6 +121,9 @@ func (clients *clientsContainer) Init(
 
 	clients.safeSearchCacheSize = filteringConf.SafeSearchCacheSize
 	clients.safeSearchCacheTTL = time.Minute * time.Duration(filteringConf.CacheTime)
+
+	// TODO(e.burkov):  Use actual implementation when it's ready.
+	clients.dhcp = dhcpsvc.Empty{}
 
 	if clients.testing {
 		return nil
@@ -356,7 +362,21 @@ func (clients *clientsContainer) clientSource(ip netip.Addr) (src clientSource) 
 
 	rc, ok := clients.ipToRC[ip]
 	if ok {
+		if rc.Source < ClientSourceDHCP {
+			if _, ok = clients.dhcp.HostByIP(ip); ok {
+				return ClientSourceDHCP
+			}
+		}
+
 		return rc.Source
+	}
+
+	return ClientSourceNone
+}
+
+func toQueryLogWHOIS(wi *RuntimeClientWHOISInfo) (cw *querylog.ClientWHOIS) {
+	if wi == nil {
+		return &querylog.ClientWHOIS{}
 	}
 
 	return ClientSourceNone
@@ -532,7 +552,9 @@ func (clients *clientsContainer) findLocked(id string) (c *Client, ok bool) {
 func (clients *clientsContainer) findDHCP(ip netip.Addr) (c *Client, ok bool) {
 	foundMAC := clients.dhcpServer.FindMACbyIP(ip)
 	if foundMAC == nil {
-		return nil, false
+		if foundMAC = clients.dhcp.MACByIP(ip); foundMAC == nil {
+			return nil, false
+		}
 	}
 
 	for _, c = range clients.list {
@@ -561,6 +583,18 @@ func (clients *clientsContainer) findRuntimeClient(ip netip.Addr) (rc *RuntimeCl
 	defer clients.lock.Unlock()
 
 	rc, ok = clients.ipToRC[ip]
+	if ok && rc.Source > ClientSourceDHCP {
+		return rc, true
+	}
+
+	host, dhcpOK := clients.dhcp.HostByIP(ip)
+	if dhcpOK && host != "" {
+		return &RuntimeClient{
+			Host:      host,
+			Source:    ClientSourceDHCP,
+			WHOISInfo: &RuntimeClientWHOISInfo{},
+		}, true
+	}
 
 	return rc, ok
 }

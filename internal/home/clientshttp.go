@@ -91,6 +91,16 @@ func (clients *clientsContainer) handleGetClients(w http.ResponseWriter, r *http
 		data.RuntimeClients = append(data.RuntimeClients, cj)
 	}
 
+	for _, l := range clients.dhcp.Leases() {
+		cj := runtimeClientJSON{
+			Name:   l.Hostname,
+			Source: ClientSourceDHCP,
+			IP:     l.IP,
+		}
+
+		data.RuntimeClients = append(data.RuntimeClients, cj)
+	}
+
 	data.Tags = clientTags
 
 	_ = aghhttp.WriteJSONResponse(w, r, data)
