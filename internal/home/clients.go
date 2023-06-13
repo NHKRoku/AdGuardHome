@@ -42,6 +42,22 @@ type DHCP interface {
 	MACByIP(ip netip.Addr) (mac net.HardwareAddr)
 }
 
+// emptyDHCP is an empty implementation of the [DHCP] interface that returns
+// zero values.
+type emptyDHCP struct{}
+
+// type check
+var _ DHCP = emptyDHCP{}
+
+// Leases implements the [DHCP] interface for emptyDHCP.
+func (emptyDHCP) Leases() (leases []*dhcpsvc.Lease) { return nil }
+
+// HostByIP implements the [DHCP] interface for emptyDHCP.
+func (emptyDHCP) HostByIP(ip netip.Addr) (host string) { return "" }
+
+// MACByIP implements the [DHCP] interface for emptyDHCP.
+func (emptyDHCP) MACByIP(ip netip.Addr) (mac net.HardwareAddr) { return nil }
+
 // clientsContainer is the storage of all runtime and persistent clients.
 type clientsContainer struct {
 	// TODO(a.garipov): Perhaps use a number of separate indices for different
@@ -123,7 +139,7 @@ func (clients *clientsContainer) Init(
 	clients.safeSearchCacheTTL = time.Minute * time.Duration(filteringConf.CacheTime)
 
 	// TODO(e.burkov):  Use actual implementation when it's ready.
-	clients.dhcp = dhcpsvc.Empty{}
+	clients.dhcp = emptyDHCP{}
 
 	if clients.testing {
 		return nil
@@ -363,20 +379,12 @@ func (clients *clientsContainer) clientSource(ip netip.Addr) (src clientSource) 
 	rc, ok := clients.ipToRC[ip]
 	if ok {
 		if rc.Source < ClientSourceDHCP {
-			if _, ok = clients.dhcp.HostByIP(ip); ok {
+			if clients.dhcp.HostByIP(ip) != "" {
 				return ClientSourceDHCP
 			}
 		}
 
 		return rc.Source
-	}
-
-	return ClientSourceNone
-}
-
-func toQueryLogWHOIS(wi *RuntimeClientWHOISInfo) (cw *querylog.ClientWHOIS) {
-	if wi == nil {
-		return &querylog.ClientWHOIS{}
 	}
 
 	return ClientSourceNone
@@ -587,12 +595,11 @@ func (clients *clientsContainer) findRuntimeClient(ip netip.Addr) (rc *RuntimeCl
 		return rc, true
 	}
 
-	host, dhcpOK := clients.dhcp.HostByIP(ip)
-	if dhcpOK && host != "" {
+	if host := clients.dhcp.HostByIP(ip); host != "" {
 		return &RuntimeClient{
-			Host:      host,
-			Source:    ClientSourceDHCP,
-			WHOISInfo: &RuntimeClientWHOISInfo{},
+			Host:   host,
+			Source: ClientSourceDHCP,
+			WHOIS:  &whois.Info{},
 		}, true
 	}
 
@@ -830,6 +837,12 @@ func (clients *clientsContainer) addHostLocked(
 ) (ok bool) {
 	rc, ok := clients.ipToRC[ip]
 	if !ok {
+		if src < ClientSourceDHCP {
+			if clients.dhcp.HostByIP(ip) != "" {
+				return false
+			}
+		}
+
 		rc = &RuntimeClient{
 			WHOIS: &whois.Info{},
 		}
