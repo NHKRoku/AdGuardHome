@@ -164,7 +164,12 @@ type Interface interface {
 	// behavior may change in the future.
 	Enabled() (ok bool)
 
+	// Leases returns all the leases in the database.
 	Leases() (leases []*dhcpsvc.Lease)
+
+	// MacByIP returns the MAC address of a client with ip.  It returns nil if
+	// there is no such client, due to an assumption that a DHCP client must
+	// always have a HardwareAddr.
 	MACByIP(ip netip.Addr) (mac net.HardwareAddr)
 
 	// HostByIP returns the hostname of the DHCP client with the given IP
@@ -172,7 +177,9 @@ type Interface interface {
 	// due to an assumption that a DHCP client must always have an IP address.
 	HostByIP(ip netip.Addr) (host string)
 
-	// TODO(e.burkov):  !! doc
+	// IPByHost returns the IP address of the DHCP client with the given
+	// hostname.  The address will be netip.Addr{} if there is no such client,
+	// due to an assumption that a DHCP client must always have an IP address.
 	IPByHost(host string) (ip netip.Addr)
 
 	WriteDiskConfig(c *ServerConfig)

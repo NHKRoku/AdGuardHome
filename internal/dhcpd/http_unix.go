@@ -146,7 +146,7 @@ func (s *server) handleDHCPStatus(w http.ResponseWriter, r *http.Request) {
 	s.srv6.WriteDiskConfig6(&status.V6)
 
 	leases := s.Leases()
-	slices.SortFunc(leases, func(a, b *dhcpsvc.Lease) (less bool) {
+	slices.SortFunc(leases, func(a, b *dhcpsvc.Lease) (sortsBefore bool) {
 		return a.IsStatic && !b.IsStatic
 	})
 

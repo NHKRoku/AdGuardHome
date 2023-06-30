@@ -61,7 +61,12 @@ type DHCPServer interface {
 	// there is one.
 	FindMACbyIP(ip netip.Addr) (mac net.HardwareAddr)
 
+	// HostByIP returns a hostname by the IP address of its lease, if there is
+	// one.
 	HostByIP(ip netip.Addr) (host string)
+
+	// IPByHost returns an IP address by the hostname of its lease, if there is
+	// one.
 	IPByHost(host string) (ip netip.Addr)
 
 	// WriteDiskConfig4 - copy disk configuration

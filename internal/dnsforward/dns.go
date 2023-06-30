@@ -69,9 +69,9 @@ type dnsContext struct {
 	// network.
 	isLocalClient bool
 
-	// dhcpHost stores a part of the queried domain name without a local domain
-	// suffix if the request is for a DHCP client hostname.
-	dhcpHost string
+	// isDHCPHost is true if the request for a local domain name and the DHCP is
+	// available for this request.
+	isDHCPHost bool
 }
 
 // resultCode is the result of a request processing function.
@@ -352,11 +352,10 @@ func (s *Server) processDHCPHosts(dctx *dnsContext) (rc resultCode) {
 
 	q := &req.Question[0]
 	dhcpHost := s.isDHCPClientHost(q)
-	if dhcpHost == "" {
+	if dctx.isDHCPHost = dhcpHost != ""; !dctx.isDHCPHost {
 		return resultCodeSuccess
 	}
 
-	dctx.dhcpHost = dhcpHost
 	if !dctx.isLocalClient {
 		log.Debug("dnsforward: %q requests for dhcp host %q", pctx.Addr, dhcpHost)
 		pctx.Res = s.genNXDomain(req)
@@ -679,7 +678,7 @@ func (s *Server) processUpstream(dctx *dnsContext) (rc resultCode) {
 	if pctx.Res != nil {
 		// The response has already been set.
 		return resultCodeSuccess
-	} else if dctx.dhcpHost != "" {
+	} else if dctx.isDHCPHost {
 		// A DHCP client hostname query that hasn't been handled or filtered.
 		// Respond with an NXDOMAIN.
 		//

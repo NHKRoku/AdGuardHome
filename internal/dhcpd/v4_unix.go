@@ -135,15 +135,11 @@ func (s *v4Server) IPByHost(host string) (ip netip.Addr) {
 		return netip.Addr{}
 	}
 
-	slices.IndexFunc(s.leases, func(l *Lease) bool {
+	for _, l := range s.leases {
 		if l.Hostname == host {
-			ip = l.IP
-
-			return true
+			return l.IP
 		}
-
-		return false
-	})
+	}
 
 	return netip.Addr{}
 }

@@ -522,24 +522,28 @@ func (clients *clientsContainer) findRuntimeClient(ip netip.Addr) (rc *RuntimeCl
 		return nil, false
 	}
 
-	var checkDHCP bool
-	func() {
+	checkDHCP := func() (checkDHCP bool) {
 		clients.lock.Lock()
 		defer clients.lock.Unlock()
 
 		rc, ok = clients.ipToRC[ip]
-		checkDHCP = !ok || rc.Source < ClientSourceDHCP
-	}()
 
-	if host := clients.dhcp.HostByIP(ip); host != "" {
-		return &RuntimeClient{
-			Host:   host,
-			Source: ClientSourceDHCP,
-			WHOIS:  &whois.Info{},
-		}, true
+		return !ok || rc.Source < ClientSourceDHCP
+	}()
+	if !checkDHCP {
+		return rc, ok
 	}
 
-	return rc, ok
+	host := clients.dhcp.HostByIP(ip)
+	if host == "" {
+		return rc, ok
+	}
+
+	return &RuntimeClient{
+		Host:   host,
+		Source: ClientSourceDHCP,
+		WHOIS:  &whois.Info{},
+	}, true
 }
 
 // check validates the client.

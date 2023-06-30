@@ -33,6 +33,8 @@ func (t *testDHCP) MACByIP(ip netip.Addr) (mac net.HardwareAddr) { return t.OnMA
 // newClientsContainer is a helper that creates a new clients container for
 // tests.
 func newClientsContainer(t *testing.T) (c *clientsContainer) {
+	t.Helper()
+
 	c = &clientsContainer{
 		testing: true,
 	}
@@ -43,7 +45,7 @@ func newClientsContainer(t *testing.T) (c *clientsContainer) {
 		OnMACBy:  func(ip netip.Addr) (mac net.HardwareAddr) { return nil },
 	}
 
-	c.Init(nil, dhcp, nil, nil, &filtering.Config{})
+	require.NoError(t, c.Init(nil, dhcp, nil, nil, &filtering.Config{}))
 
 	return c
 }
