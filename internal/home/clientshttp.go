@@ -34,6 +34,8 @@ type clientJSON struct {
 	WHOIS          *whois.Info                 `json:"whois_info,omitempty"`
 	SafeSearchConf *filtering.SafeSearchConfig `json:"safe_search"`
 
+	Schedule *schedule.Weekly `json:"schedule"`
+
 	Name string `json:"name"`
 
 	BlockedServices []string `json:"blocked_services"`
@@ -119,10 +121,7 @@ func (clients *clientsContainer) jsonToClient(cj clientJSON, prev *Client) (c *C
 		}
 	}
 
-	weekly := schedule.EmptyWeekly()
-	if prev != nil {
-		weekly = prev.BlockedServices.Schedule.Clone()
-	}
+	weekly := copySchedule(&cj, prev)
 
 	c = &Client{
 		safeSearchConf: safeSearchConf,
@@ -171,6 +170,18 @@ func (clients *clientsContainer) jsonToClient(cj clientJSON, prev *Client) (c *C
 	return c, nil
 }
 
+// copySchedule returns a copy of weekly schedule from JSON, previous client,
+// or creates new empty schedule.
+func copySchedule(j *clientJSON, prev *Client) (weekly *schedule.Weekly) {
+	if j.Schedule != nil {
+		return j.Schedule.Clone()
+	} else if prev != nil && prev.BlockedServices != nil {
+		return prev.BlockedServices.Schedule.Clone()
+	}
+
+	return schedule.EmptyWeekly()
+}
+
 // clientToJSON converts Client object to JSON.
 func clientToJSON(c *Client) (cj *clientJSON) {
 	// TODO(d.kolyshev): Remove after cleaning the deprecated
@@ -191,6 +202,7 @@ func clientToJSON(c *Client) (cj *clientJSON) {
 
 		UseGlobalBlockedServices: !c.UseOwnBlockedServices,
 
+		Schedule:        c.BlockedServices.Schedule,
 		BlockedServices: c.BlockedServices.IDs,
 
 		Upstreams: c.Upstreams,

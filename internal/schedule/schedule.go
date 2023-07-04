@@ -2,6 +2,7 @@
 package schedule
 
 import (
+	"encoding/json"
 	"fmt"
 	"time"
 
@@ -76,6 +77,30 @@ func (w *Weekly) Contains(t time.Time) (ok bool) {
 }
 
 // type check
+var _ json.Unmarshaler = (*Weekly)(nil)
+
+// UnmarshalJSON implements the [json.Unmarshaler] interface for *Weekly.
+func (w *Weekly) UnmarshalJSON(data []byte) (err error) {
+	conf := &weeklyConfig{}
+
+	err = json.Unmarshal(data, conf)
+	if err != nil {
+		// Don't wrap the error since it's informative enough as is.
+		return err
+	}
+
+	weekly, err := fromConfig(conf)
+	if err != nil {
+		// Don't wrap the error since it's informative enough as is.
+		return err
+	}
+
+	*w = *weekly
+
+	return nil
+}
+
+// type check
 var _ yaml.Unmarshaler = (*Weekly)(nil)
 
 // UnmarshalYAML implements the [yaml.Unmarshaler] interface for *Weekly.
@@ -88,96 +113,42 @@ func (w *Weekly) UnmarshalYAML(value *yaml.Node) (err error) {
 		return err
 	}
 
-	weekly := Weekly{}
-
-	weekly.location, err = time.LoadLocation(conf.TimeZone)
+	weekly, err := fromConfig(conf)
 	if err != nil {
 		// Don't wrap the error since it's informative enough as is.
 		return err
 	}
 
-	days := []dayConfig{
-		time.Sunday:    conf.Sunday,
-		time.Monday:    conf.Monday,
-		time.Tuesday:   conf.Tuesday,
-		time.Wednesday: conf.Wednesday,
-		time.Thursday:  conf.Thursday,
-		time.Friday:    conf.Friday,
-		time.Saturday:  conf.Saturday,
-	}
-	for i, d := range days {
-		r := dayRange{
-			start: d.Start.Duration,
-			end:   d.End.Duration,
-		}
-
-		err = w.validate(r)
-		if err != nil {
-			return fmt.Errorf("weekday %s: %w", time.Weekday(i), err)
-		}
-
-		weekly.days[i] = r
-	}
-
-	*w = weekly
+	*w = *weekly
 
 	return nil
 }
 
-// weeklyConfig is the YAML configuration structure of Weekly.
+// weeklyConfig is the JSON and YAML configuration structure of Weekly.
 type weeklyConfig struct {
 	// TimeZone is the local time zone.
-	TimeZone string `yaml:"time_zone"`
+	TimeZone string `json:"time_zone" yaml:"time_zone"`
 
 	// Days of the week.
 
-	Sunday    dayConfig `yaml:"sun,omitempty"`
-	Monday    dayConfig `yaml:"mon,omitempty"`
-	Tuesday   dayConfig `yaml:"tue,omitempty"`
-	Wednesday dayConfig `yaml:"wed,omitempty"`
-	Thursday  dayConfig `yaml:"thu,omitempty"`
-	Friday    dayConfig `yaml:"fri,omitempty"`
-	Saturday  dayConfig `yaml:"sat,omitempty"`
+	Sunday    dayConfig `json:"sun" yaml:"sun,omitempty"`
+	Monday    dayConfig `json:"mon" yaml:"mon,omitempty"`
+	Tuesday   dayConfig `json:"tue" yaml:"tue,omitempty"`
+	Wednesday dayConfig `json:"wed" yaml:"wed,omitempty"`
+	Thursday  dayConfig `json:"thu" yaml:"thu,omitempty"`
+	Friday    dayConfig `json:"fri" yaml:"fri,omitempty"`
+	Saturday  dayConfig `json:"sat" yaml:"sat,omitempty"`
 }
 
-// dayConfig is the YAML configuration structure of dayRange.
+// dayConfig is the JSON and YAML configuration structure of dayRange.
 type dayConfig struct {
-	Start timeutil.Duration `yaml:"start"`
-	End   timeutil.Duration `yaml:"end"`
+	Start timeutil.Duration `json:"start" yaml:"start"`
+	End   timeutil.Duration `json:"end" yaml:"end"`
 }
 
-// maxDayRange is the maximum value for day range end.
-const maxDayRange = 24 * time.Hour
-
-// validate returns the day range rounding errors, if any.
-func (w *Weekly) validate(r dayRange) (err error) {
-	defer func() { err = errors.Annotate(err, "bad day range: %w") }()
-
-	err = r.validate()
-	if err != nil {
-		// Don't wrap the error since it's informative enough as is.
-		return err
-	}
-
-	start := r.start.Truncate(time.Minute)
-	end := r.end.Truncate(time.Minute)
-
-	switch {
-	case start != r.start:
-		return fmt.Errorf("start %s isn't rounded to minutes", r.start)
-	case end != r.end:
-		return fmt.Errorf("end %s isn't rounded to minutes", r.end)
-	default:
-		return nil
-	}
-}
-
-// type check
-var _ yaml.Marshaler = (*Weekly)(nil)
-
-// MarshalYAML implements the [yaml.Marshaler] interface for *Weekly.
-func (w *Weekly) MarshalYAML() (v any, err error) {
-	return weeklyConfig{
+// toConfig creates the weeklyConfig from Weekly.
+func (w *Weekly) toConfig() (conf *weeklyConfig) {
+	return &weeklyConfig{
 		TimeZone: w.location.String(),
 		Sunday: dayConfig{
 			Start: timeutil.Duration{Duration: w.days[time.Sunday].start},
@@ -207,7 +178,87 @@ func (w *Weekly) MarshalYAML() (v any, err error) {
 			Start: timeutil.Duration{Duration: w.days[time.Saturday].start},
 			End:   timeutil.Duration{Duration: w.days[time.Saturday].end},
 		},
-	}, nil
+	}
+}
+
+// fromConfig creates Weekly from weeklyConfig and validates it.
+func fromConfig(conf *weeklyConfig) (w *Weekly, err error) {
+	w = &Weekly{}
+
+	w.location, err = time.LoadLocation(conf.TimeZone)
+	if err != nil {
+		// Don't wrap the error since it's informative enough as is.
+		return nil, err
+	}
+
+	days := []dayConfig{
+		time.Sunday:    conf.Sunday,
+		time.Monday:    conf.Monday,
+		time.Tuesday:   conf.Tuesday,
+		time.Wednesday: conf.Wednesday,
+		time.Thursday:  conf.Thursday,
+		time.Friday:    conf.Friday,
+		time.Saturday:  conf.Saturday,
+	}
+	for i, d := range days {
+		r := dayRange{
+			start: d.Start.Duration,
+			end:   d.End.Duration,
+		}
+
+		err = w.validate(r)
+		if err != nil {
+			return nil, fmt.Errorf("weekday %s: %w", time.Weekday(i), err)
+		}
+
+		w.days[i] = r
+	}
+
+	return w, nil
+}
+
+// maxDayRange is the maximum value for day range end.
+const maxDayRange = 24 * time.Hour
+
+// validate returns the day range rounding errors, if any.
+func (w *Weekly) validate(r dayRange) (err error) {
+	defer func() { err = errors.Annotate(err, "bad day range: %w") }()
+
+	err = r.validate()
+	if err != nil {
+		// Don't wrap the error since it's informative enough as is.
+		return err
+	}
+
+	start := r.start.Truncate(time.Minute)
+	end := r.end.Truncate(time.Minute)
+
+	switch {
+	case start != r.start:
+		return fmt.Errorf("start %s isn't rounded to minutes", r.start)
+	case end != r.end:
+		return fmt.Errorf("end %s isn't rounded to minutes", r.end)
+	default:
+		return nil
+	}
+}
+
+// type check
+var _ json.Marshaler = (*Weekly)(nil)
+
+// MarshalJSON implements the [json.Marshaler] interface for *Weekly.
+func (w *Weekly) MarshalJSON() (data []byte, err error) {
+	c := w.toConfig()
+
+	return json.Marshal(c)
+}
+
+// type check
+var _ yaml.Marshaler = (*Weekly)(nil)
+
+// MarshalYAML implements the [yaml.Marshaler] interface for *Weekly.
+func (w *Weekly) MarshalYAML() (v any, err error) {
+	return w.toConfig(), nil
 }
 
 // dayRange represents a single interval within a day.  The interval begins at

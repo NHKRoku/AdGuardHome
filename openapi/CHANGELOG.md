@@ -4,6 +4,54 @@
 
 ## v0.108.0: API changes
 
+## v0.107.34: API changes
+
+### `/control/clients` HTTP APIs
+
+The following HTTP APIs have been changed:
+
+*  `GET /control/clients`;
+*  `GET /control/clients/find?ip0=...&ip1=...&ip2=...`;
+*  `POST /control/clients/add`;
+*  `POST /control/clients/update`;
+
+The new field `schedule` has been added to JSON objects.  It has the following
+format:
+
+```json
+{
+  "time_zone": "Local",
+  "sun": {
+    "start": "0s"
+    "end": "24h",
+  },
+  "mon": {
+    "start": "10m"
+    "end": "23h",
+  },
+  "thu": {
+    "start": "20m"
+    "end": "22h",
+  },
+  "tue": {
+    "start": "30m"
+    "end": "21h",
+  },
+  "wed": {
+    "start": "40m"
+    "end": "20h",
+  },
+  "fri": {
+    "start": "50m"
+    "end": "19h",
+  },
+  "sat": {
+    "start": "1h"
+    "end": "18h",
+  }
+}
+```
+
 ## v0.107.30: API changes
 
 ### `POST /control/version.json` and `GET /control/dhcp/interfaces` content type

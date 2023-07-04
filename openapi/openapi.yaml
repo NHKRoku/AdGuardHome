@@ -2471,6 +2471,41 @@
           'type': 'boolean'
         'youtube':
           'type': 'boolean'
+    'Schedule':
+      'type': 'object'
+      'description': >
+        Sets periods of inactivity for filtering blocked services.  The
+        schedule contains 7 days (Sunday to Saturday) and a time zone.
+      'properties':
+        'time_zone':
+          'type': 'string'
+        'sun':
+          '$ref': '#/components/schemas/DayRange'
+        'mon':
+          '$ref': '#/components/schemas/DayRange'
+        'tue':
+          '$ref': '#/components/schemas/DayRange'
+        'wed':
+          '$ref': '#/components/schemas/DayRange'
+        'thu':
+          '$ref': '#/components/schemas/DayRange'
+        'fri':
+          '$ref': '#/components/schemas/DayRange'
+        'sat':
+          '$ref': '#/components/schemas/DayRange'
+    'DayRange':
+      'type': 'object'
+      'description': >
+        DayRange consists of "start" and "end", which are the durations from
+        the start of day.  Duration is a string in human-readable format.
+        "start" is greater or equal to "0s" and less than "24h".  "end" must be
+        greater than "start" and less or equal to "24h".  "start" and "end" are
+        expected to be rounded to minutes.
+      'properties':
+        'start':
+          'type': 'string'
+        'end':
+          'type': 'string'
     'Client':
       'type': 'object'
       'description': 'Client information.'
@@ -2499,6 +2534,8 @@
           '$ref': '#/components/schemas/SafeSearchConfig'
         'use_global_blocked_services':
           'type': 'boolean'
+        'schedule':
+          '$ref': '#/components/schemas/Schedule'
         'blocked_services':
           'type': 'array'
           'items':
