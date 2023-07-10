@@ -55,6 +55,18 @@ type clientJSON struct {
 	IgnoreStatistics aghalg.NullBool `json:"ignore_statistics"`
 }
 
+// copySchedule returns a copy of weekly schedule from JSON, previous client,
+// or creates new empty schedule.
+func (j *clientJSON) copySchedule(prev *Client) (weekly *schedule.Weekly) {
+	if j.Schedule != nil {
+		return j.Schedule.Clone()
+	} else if prev != nil && prev.BlockedServices != nil {
+		return prev.BlockedServices.Schedule.Clone()
+	}
+
+	return schedule.EmptyWeekly()
+}
+
 type runtimeClientJSON struct {
 	WHOIS *whois.Info `json:"whois_info"`
 
@@ -121,7 +133,7 @@ func (clients *clientsContainer) jsonToClient(cj clientJSON, prev *Client) (c *C
 		}
 	}
 
-	weekly := copySchedule(&cj, prev)
+	weekly := cj.copySchedule(prev)
 
 	c = &Client{
 		safeSearchConf: safeSearchConf,
@@ -168,18 +180,6 @@ func (clients *clientsContainer) jsonToClient(cj clientJSON, prev *Client) (c *C
 	}
 
 	return c, nil
-}
-
-// copySchedule returns a copy of weekly schedule from JSON, previous client,
-// or creates new empty schedule.
-func copySchedule(j *clientJSON, prev *Client) (weekly *schedule.Weekly) {
-	if j.Schedule != nil {
-		return j.Schedule.Clone()
-	} else if prev != nil && prev.BlockedServices != nil {
-		return prev.BlockedServices.Schedule.Clone()
-	}
-
-	return schedule.EmptyWeekly()
 }
 
 // clientToJSON converts Client object to JSON.
