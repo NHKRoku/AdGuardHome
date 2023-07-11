@@ -1,4 +1,4 @@
-package websvc
+package aghhttp
 
 import (
 	"encoding/json"
@@ -7,7 +7,6 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/golibs/httphdr"
 	"github.com/AdguardTeam/golibs/log"
 )
@@ -87,10 +86,10 @@ func (t *JSONTime) UnmarshalJSON(b []byte) (err error) {
 	return nil
 }
 
-// writeJSONOKResponse writes headers with the code 200 OK, encodes v into w,
+// WriteJSONOKResponse writes headers with the code 200 OK, encodes v into w,
 // and logs any errors it encounters.  r is used to get additional information
 // from the request.
-func writeJSONOKResponse(w http.ResponseWriter, r *http.Request, v any) {
+func WriteJSONOKResponse(w http.ResponseWriter, r *http.Request, v any) {
 	writeJSONResponse(w, r, v, http.StatusOK)
 }
 
@@ -100,8 +99,8 @@ func writeJSONOKResponse(w http.ResponseWriter, r *http.Request, v any) {
 func writeJSONResponse(w http.ResponseWriter, r *http.Request, v any, code int) {
 	// TODO(a.garipov): Put some of these to a middleware.
 	h := w.Header()
-	h.Set(httphdr.ContentType, aghhttp.HdrValApplicationJSON)
-	h.Set(httphdr.Server, aghhttp.UserAgent())
+	h.Set(httphdr.ContentType, HdrValApplicationJSON)
+	h.Set(httphdr.Server, UserAgent())
 
 	w.WriteHeader(code)
 
@@ -131,10 +130,10 @@ type HTTPAPIErrorResp struct {
 	Msg  string    `json:"msg"`
 }
 
-// writeJSONErrorResponse encodes err as a JSON error into w, and logs any
+// WriteJSONErrorResponse encodes err as a JSON error into w, and logs any
 // errors it encounters.  r is used to get additional information from the
 // request.
-func writeJSONErrorResponse(w http.ResponseWriter, r *http.Request, err error) {
+func WriteJSONErrorResponse(w http.ResponseWriter, r *http.Request, err error) {
 	log.Error("websvc: %s %s: %s", r.Method, r.URL.Path, err)
 
 	writeJSONResponse(w, r, &HTTPAPIErrorResp{

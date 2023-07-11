@@ -2478,6 +2478,10 @@
         schedule contains 7 days (Sunday to Saturday) and a time zone.
       'properties':
         'time_zone':
+          'description': >
+            Time zone name according to IANA time zone database.  For example
+            "Europe/Brussels".  "Local" represents the system's local time
+            zone.
           'type': 'string'
         'sun':
           '$ref': '#/components/schemas/DayRange'
@@ -2496,16 +2500,17 @@
     'DayRange':
       'type': 'object'
       'description': >
-        DayRange consists of "start" and "end", which are the durations from
-        the start of day.  Duration is a string in human-readable format.
-        "start" is greater or equal to "0s" and less than "24h".  "end" must be
-        greater than "start" and less or equal to "24h".  "start" and "end" are
-        expected to be rounded to minutes.
+        DayRange consists of "start" and "end", which are the number of
+        milliseconds elapsed from the start of the day.  If "start" and "end"
+        are equal to "0" day range is empty.  Otherwise "start" must be greater
+        or equal to "0" and less than "86400000" (24 hours),  "end" must be
+        greater than "start" and less or equal to "86400000".  "start" and
+        "end" are expected to be rounded to minutes.
       'properties':
         'start':
-          'type': 'string'
+          'type': 'number'
         'end':
-          'type': 'string'
+          'type': 'number'
     'Client':
       'type': 'object'
       'description': 'Client information.'

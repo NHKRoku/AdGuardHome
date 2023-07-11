@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/timeutil"
 	"gopkg.in/yaml.v3"
@@ -108,8 +109,8 @@ func (w *Weekly) UnmarshalJSON(data []byte) (err error) {
 
 		if d != nil {
 			r = dayRange{
-				start: time.Duration(d.Start) * time.Millisecond,
-				end:   time.Duration(d.End) * time.Millisecond,
+				start: time.Duration(d.Start),
+				end:   time.Duration(d.End),
 			}
 		}
 
@@ -327,8 +328,8 @@ func (r dayRange) toDayConfigJSON() (j *dayConfigJSON) {
 	}
 
 	return &dayConfigJSON{
-		Start: float64(r.start.Milliseconds()),
-		End:   float64(r.end.Milliseconds()),
+		Start: aghhttp.JSONDuration(r.start),
+		End:   aghhttp.JSONDuration(r.end),
 	}
 }
 
@@ -350,7 +351,6 @@ type weeklyConfigJSON struct {
 
 // dayConfigJSON is the JSON configuration structure of dayRange.
 type dayConfigJSON struct {
-	// TODO(s.chzhen):  Use [websvc.JSONDuration] from [next] package.
-	Start float64 `json:"start"`
-	End   float64 `json:"end"`
+	Start aghhttp.JSONDuration `json:"start"`
+	End   aghhttp.JSONDuration `json:"end"`
 }

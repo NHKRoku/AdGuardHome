@@ -22,32 +22,32 @@ format:
 {
   "time_zone": "Local",
   "sun": {
-    "start": "0s"
-    "end": "24h",
+    "start": 0,
+    "end": 86400000
   },
   "mon": {
-    "start": "10m"
-    "end": "23h",
+    "start": 60000,
+    "end": 82800000
   },
   "thu": {
-    "start": "20m"
-    "end": "22h",
+    "start": 120000,
+    "end": 79200000
   },
   "tue": {
-    "start": "30m"
-    "end": "21h",
+    "start": 180000,
+    "end": 75600000
   },
   "wed": {
-    "start": "40m"
-    "end": "20h",
+    "start": 240000,
+    "end": 72000000
   },
   "fri": {
-    "start": "50m"
-    "end": "19h",
+    "start": 300000,
+    "end": 68400000
   },
   "sat": {
-    "start": "1h"
-    "end": "18h",
+    "start": 360000,
+    "end": 64800000
   }
 }
 ```
