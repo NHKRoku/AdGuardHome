@@ -34,10 +34,12 @@ type clientJSON struct {
 	WHOIS          *whois.Info                 `json:"whois_info,omitempty"`
 	SafeSearchConf *filtering.SafeSearchConfig `json:"safe_search"`
 
-	Schedule *schedule.Weekly `json:"schedule"`
+	// Schedule is blocked services schedule for every day of the week.
+	Schedule *schedule.Weekly `json:"blocked_services_schedule"`
 
 	Name string `json:"name"`
 
+	// BlockedServices is the names of blocked services.
 	BlockedServices []string `json:"blocked_services"`
 	IDs             []string `json:"ids"`
 	Tags            []string `json:"tags"`

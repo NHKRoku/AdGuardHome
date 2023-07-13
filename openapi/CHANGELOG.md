@@ -4,7 +4,7 @@
 
 ## v0.108.0: API changes
 
-## v0.107.34: API changes
+## v0.107.35: API changes
 
 ### `/control/clients` HTTP APIs
 

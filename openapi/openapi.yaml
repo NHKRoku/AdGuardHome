@@ -2480,7 +2480,7 @@
         'time_zone':
           'description': >
             Time zone name according to IANA time zone database.  For example
-            "Europe/Brussels".  "Local" represents the system's local time
+            `Europe/Brussels`.  `Local` represents the system's local time
             zone.
           'type': 'string'
         'sun':
@@ -2500,17 +2500,25 @@
     'DayRange':
       'type': 'object'
       'description': >
-        DayRange consists of "start" and "end", which are the number of
-        milliseconds elapsed from the start of the day.  If "start" and "end"
-        are equal to "0" day range is empty.  Otherwise "start" must be greater
-        or equal to "0" and less than "86400000" (24 hours),  "end" must be
-        greater than "start" and less or equal to "86400000".  "start" and
-        "end" are expected to be rounded to minutes.
+        The single interval within a day.  It begins at the `start` and ends
+        before the `end`.
       'properties':
         'start':
           'type': 'number'
+          'description': >
+            The number of milliseconds elapsed from the start of a day.  It
+            must be less than `end` and is expected to be rounded to minutes.
+            So the maximum value is `86340000` (23 hours and 59 minutes).
+          'minimum': 0
+          'maximum': 86340000
         'end':
           'type': 'number'
+          'description': >
+            The number of milliseconds elapsed from the start of a day.  It is
+            expected to be rounded to minutes.  The maximum value is `86400000`
+            (24 hours).
+          'minimum': 0
+          'maximum': 86400000
     'Client':
       'type': 'object'
       'description': 'Client information.'
