@@ -15,8 +15,8 @@ The following HTTP APIs have been changed:
 *  `POST /control/clients/add`;
 *  `POST /control/clients/update`;
 
-The new field `schedule` has been added to JSON objects.  It has the following
-format:
+The new field `blocked_services_schedule` has been added to JSON objects.  It
+has the following format:
 
 ```json
 {

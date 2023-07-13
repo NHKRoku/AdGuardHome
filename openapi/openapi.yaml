@@ -2547,7 +2547,7 @@
           '$ref': '#/components/schemas/SafeSearchConfig'
         'use_global_blocked_services':
           'type': 'boolean'
-        'schedule':
+        'blocked_services_schedule':
           '$ref': '#/components/schemas/Schedule'
         'blocked_services':
           'type': 'array'
