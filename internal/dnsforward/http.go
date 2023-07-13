@@ -835,6 +835,8 @@ func (s *Server) handleDoH(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	r.Header.Set("Server", aghhttp.UserAgent())
+
 	s.ServeHTTP(w, r)
 }
 
