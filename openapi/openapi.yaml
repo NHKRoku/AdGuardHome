@@ -1001,6 +1001,9 @@
                 '$ref': '#/components/schemas/BlockedServicesAll'
   '/blocked_services/list':
     'get':
+      'deprecated': true
+      'description': >
+        Deprecated: Use `GET /blocked_services/schedule` instead.
       'tags':
       - 'blocked_services'
       'operationId': 'blockedServicesList'
@@ -1014,6 +1017,9 @@
                 '$ref': '#/components/schemas/BlockedServicesArray'
   '/blocked_services/set':
     'post':
+      'deprecated': true
+      'description': >
+        Deprecated: Use `PUT /blocked_services/schedule/update` instead.
       'tags':
       - 'blocked_services'
       'operationId': 'blockedServicesSet'
@@ -1023,6 +1029,34 @@
           'application/json':
             'schema':
               '$ref': '#/components/schemas/BlockedServicesArray'
+      'responses':
+        '200':
+          'description': 'OK.'
+  '/blocked_services/schedule':
+    'get':
+      'tags':
+      - 'blocked_services'
+      'operationId': 'blockedServicesSchedule'
+      'summary': 'Get blocked services'
+      'responses':
+        '200':
+          'description': 'OK.'
+          'content':
+            'application/json':
+              'schema':
+                '$ref': '#/components/schemas/BlockedServicesSchedule'
+  '/blocked_services/schedule/update':
+    'put':
+      'tags':
+      - 'blocked_services'
+      'operationId': 'blockedServicesScheduleUpdate'
+      'summary': 'Update blocked services'
+      'requestBody':
+        'content':
+          'application/json':
+            'schema':
+              '$ref': '#/components/schemas/BlockedServicesSchedule'
+        'required': true
       'responses':
         '200':
           'description': 'OK.'
@@ -2829,6 +2863,17 @@
       - 'name'
       - 'rules'
       'type': 'object'
+    'BlockedServicesSchedule':
+      'type': 'object'
+      'properties':
+        'schedule':
+          '$ref': '#/components/schemas/Schedule'
+        'ids':
+          'description': >
+            The names of the blocked services.
+          'type': 'array'
+          'items':
+            'type': 'string'
     'CheckConfigRequest':
       'type': 'object'
       'description': 'Configuration to be checked'

@@ -52,6 +52,10 @@ func FullWeekly() (w *Weekly) {
 
 // Clone returns a deep copy of a weekly.
 func (w *Weekly) Clone() (c *Weekly) {
+	if w == nil {
+		return nil
+	}
+
 	// NOTE:  Do not use time.LoadLocation, because the results will be
 	// different on time zone database update.
 	return &Weekly{

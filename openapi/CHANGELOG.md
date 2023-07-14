@@ -6,6 +6,38 @@
 
 ## v0.107.35: API changes
 
+### Deprecated blocked services APIs
+
+* The `GET /control/blocked_services/list` HTTP API; use the new `GET
+  /control/blocked_services/schedule` API instead.
+
+* The `POST /control/blocked_services/set` HTTP API; use the new `PUT
+  /control/blocked_services/schedule/update` API instead.
+
+### New blocked services APIs
+
+* The new `GET /control/blocked_services/schedule` HTTP API.
+
+* The new `PUT /control/blocked_services/schedule/update` HTTP API allows
+  config updates.
+
+These APIs accept and return a JSON object with the following format:
+
+```json
+{
+  "schedule": {
+    "time_zone": "Local",
+    "sun": {
+      "start": 46800000,
+      "end": 82800000
+    }
+  },
+  "ids": [
+    "vk"
+  ]
+}
+```
+
 ### `/control/clients` HTTP APIs
 
 The following HTTP APIs have been changed:

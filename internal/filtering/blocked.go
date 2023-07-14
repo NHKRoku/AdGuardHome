@@ -50,10 +50,10 @@ func initBlockedServices() {
 // BlockedServices is the configuration of blocked services.
 type BlockedServices struct {
 	// Schedule is blocked services schedule for every day of the week.
-	Schedule *schedule.Weekly `yaml:"schedule"`
+	Schedule *schedule.Weekly `json:"schedule" yaml:"schedule"`
 
 	// IDs is the names of blocked services.
-	IDs []string `yaml:"ids"`
+	IDs []string `json:"ids" yaml:"ids"`
 }
 
 // Clone returns a deep copy of blocked services.
@@ -125,6 +125,7 @@ func (d *DNSFilter) handleBlockedServicesAll(w http.ResponseWriter, r *http.Requ
 	})
 }
 
+// Deprecated:  Use handleBlockedServicesSchedule.
 func (d *DNSFilter) handleBlockedServicesList(w http.ResponseWriter, r *http.Request) {
 	d.confLock.RLock()
 	list := d.Config.BlockedServices.IDs
@@ -133,6 +134,7 @@ func (d *DNSFilter) handleBlockedServicesList(w http.ResponseWriter, r *http.Req
 	_ = aghhttp.WriteJSONResponse(w, r, list)
 }
 
+// Deprecated:  Use handleBlockedServicesScheduleUpdate.
 func (d *DNSFilter) handleBlockedServicesSet(w http.ResponseWriter, r *http.Request) {
 	list := []string{}
 	err := json.NewDecoder(r.Body).Decode(&list)
@@ -147,6 +149,54 @@ func (d *DNSFilter) handleBlockedServicesSet(w http.ResponseWriter, r *http.Requ
 	d.confLock.Unlock()
 
 	log.Debug("Updated blocked services list: %d", len(list))
+
+	d.Config.ConfigModified()
+}
+
+// handleBlockedServicesSchedule is the handler for the GET
+// /control/blocked_services/schedule HTTP API.
+func (d *DNSFilter) handleBlockedServicesSchedule(w http.ResponseWriter, r *http.Request) {
+	var bsvc *BlockedServices
+	func() {
+		d.confLock.RLock()
+		defer d.confLock.RUnlock()
+
+		bsvc = d.Config.BlockedServices.Clone()
+	}()
+
+	_ = aghhttp.WriteJSONResponse(w, r, bsvc)
+}
+
+// handleBlockedServicesScheduleUpdate is the handler for the PUT
+// /control/blocked_services/schedule/update HTTP API.
+func (d *DNSFilter) handleBlockedServicesScheduleUpdate(w http.ResponseWriter, r *http.Request) {
+	bsvc := &BlockedServices{}
+	err := json.NewDecoder(r.Body).Decode(bsvc)
+	if err != nil {
+		aghhttp.Error(r, w, http.StatusBadRequest, "json.Decode: %s", err)
+
+		return
+	}
+
+	err = bsvc.Validate()
+	if err != nil {
+		aghhttp.Error(r, w, http.StatusUnprocessableEntity, "validating: %s", err)
+
+		return
+	}
+
+	if bsvc.Schedule == nil {
+		bsvc.Schedule = schedule.EmptyWeekly()
+	}
+
+	func() {
+		d.confLock.Lock()
+		defer d.confLock.Unlock()
+
+		d.Config.BlockedServices = bsvc
+	}()
+
+	log.Debug("updated blocked services schedule: %d", len(bsvc.IDs))
 
 	d.Config.ConfigModified()
 }
