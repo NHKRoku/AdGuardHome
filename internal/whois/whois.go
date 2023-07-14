@@ -48,8 +48,7 @@ func (Empty) Process(_ context.Context, _ netip.Addr) (info *Info, changed bool)
 
 // Config is the configuration structure for Default.
 type Config struct {
-	// DialContext specifies the dial function for creating unencrypted TCP
-	// connections.
+	// DialContext is used to create TCP connections to WHOIS servers.
 	DialContext func(ctx context.Context, network, addr string) (conn net.Conn, err error)
 
 	// ServerAddr is the address of the WHOIS server.
@@ -86,8 +85,7 @@ type Default struct {
 	// resolve the same IP.
 	cache gcache.Cache
 
-	// dialContext connects to a remote server resolving hostname using our own
-	// DNS server and unecrypted TCP connection.
+	// dialContext is used to create TCP connections to WHOIS servers.
 	dialContext func(ctx context.Context, network, addr string) (conn net.Conn, err error)
 
 	// serverAddr is the address of the WHOIS server.
@@ -215,7 +213,7 @@ func (w *Default) query(ctx context.Context, target, serverAddr string) (data []
 		return nil, err
 	}
 
-	_ = conn.SetReadDeadline(time.Now().Add(w.timeout))
+	_ = conn.SetDeadline(time.Now().Add(w.timeout))
 	_, err = io.WriteString(conn, target+"\r\n")
 	if err != nil {
 		// Don't wrap the error since it's informative enough as is.
@@ -310,7 +308,7 @@ func (w *Default) requestInfo(
 
 	kv, err := w.queryAll(ctx, ip.String())
 	if err != nil {
-		log.Debug("whois: quering about %q: %s", ip, err)
+		log.Debug("whois: querying %q: %s", ip, err)
 
 		return nil, true
 	}
