@@ -602,7 +602,6 @@ install_service() {
 }
 
 
-
 # Entrypoint
 
 # Set default values of configuration variables.
